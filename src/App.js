@@ -1,55 +1,73 @@
 
-import { useReducer } from 'react';
+import P from 'prop-types';
+import { createContext, useContext, useReducer, useRef } from 'react';
 import './App.css';
-import { Div } from './components/Div';
-import { AppContext } from './contexts/AppContext';
 
+
+//actons.js
+export const actions = {
+  CHANGE_TITLE: 'CHANGE_TITLE' ,
+};
+
+//data.js
 const globalState = {
-  title: 'O Titulo do Context',
-  body: 'O Body do Conyexto',
+  title: 'O Titulo do Contexto',
+  body: 'O Body do Contexto',
   counter: 0,
 };
 
-const reducer = (state, action) => {
+//reducer.js
+export const reducer = (state, action) => {
   switch (action.type) {
-    case 'muda':
-      console.log('Chamou Muda com', action.payload);
-    return { ...state, title: action.payload};
-
-    case 'inverter' : {
-      console.log('Chamou Inverter');
-      const { title} = state;
-      return {
-        ...state, title: title.split('').reverse().join('')
-      };
+    case actions.CHANGE_TITLE: {
+      console.log('Mudar título');
+      return{...state, title: action.payload};
     }
   }
-
-  console.log("NENHUMA ACTION ENCONTRADA...");
-  return { ...state};
+  return { ...state };
 };
 
-function App() {
+// AppContext.jsx
+export const Context = createContext();
+export const AppContext = ({ children }) => {
   const [state, dispatch] = useReducer(reducer, globalState);
-  const { counter, title, body } = state;
+
+  const changeTitle = (payload) => {
+    dispatch({ type: actions.CHANGE_TITLE, payload })
+  }
+
+  return <Context.Provider value={{ state, changeTitle }}>{ children }</Context.Provider>;
+};
+
+AppContext.prototype = {
+  children: P.node,
+};
+
+//H1/index.jsx
+export const H1 = () => {
+  const context = useContext(Context);
+  const inputRef = useRef();
 
   return (
-     <div>
-        <h1> {title} {counter} </h1>
-        <button onClick={() => dispatch({
-          type: 'muda',
-          payload: new Date().toLocaleString('pt-BR'),
-          })}
-        >
-          Click
-        </button>
-        <button onClick={() => dispatch({ type: 'inverter'})}>
-          Invert
-        </button>
-        <button onClick={() => dispatch({ type: ''})}>
-          SEM ACTION
-        </button>
-     </div>
+          <>
+            <h1
+              onClick={() => context.changeTitle(inputRef.current.value)}>
+                { context.state.title }
+            </h1>
+
+            <input type='text' ref={inputRef} />
+          </>
+  );
+}
+//App.jsx
+function App() {
+
+  return (
+      <AppContext>
+      <div>
+        <H1 />
+      </div>
+     </AppContext>
 
     );
  }
